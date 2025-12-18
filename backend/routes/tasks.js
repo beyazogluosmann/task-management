@@ -202,8 +202,15 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     const { title, description, status, assignedTo, dueDate } = req.body;
 
-    if (!isAdmin && (title || description || assignedTo || dueDate)) {
-      return res.status(403).json({ message: 'Users can only update task status' });
+    
+    if (!isAdmin) {
+      const updates = Object.keys(req.body);
+      const allowedFields = ['status'];
+      const hasDisallowedFields = updates.some(field => !allowedFields.includes(field));
+      
+      if (hasDisallowedFields) {
+        return res.status(403).json({ message: 'Users can only update task status' });
+      }
     }
 
     if (status && !['pending', 'in_progress', 'completed'].includes(status)) {
@@ -223,11 +230,15 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     const updateFields = {};
 
-    if (title) updateFields.title = title;
-    if (description) updateFields.description = description;
+    
+    if (isAdmin) {
+      if (title) updateFields.title = title;
+      if (description) updateFields.description = description;
+      if (assignedTo) updateFields.assignedTo = new ObjectId(assignedTo);
+      if (dueDate) updateFields.dueDate = new Date(dueDate);
+    }
+
     if (status) updateFields.status = status;
-    if (assignedTo) updateFields.assignedTo = new ObjectId(assignedTo);
-    if (dueDate) updateFields.dueDate = new Date(dueDate);
 
     updateFields.updatedAt = new Date();
 

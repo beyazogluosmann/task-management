@@ -121,14 +121,17 @@ export default function Dashboard() {
     const handleUpdateTask = async (e) => {
         e.preventDefault();
 
-        if (!editingTask.title) {
-            toast.error('Başlık gerekli');
-            return;
-        }
+        if (user?.role === 'admin') {
+            if (!editingTask.title) {
+                toast.error('Başlık gerekli');
+                return;
+            }
 
-        if (!editingTask.description) {
-            toast.error('Açıklama gerekli');
-            return;
+            if (!editingTask.description) {
+                toast.error('Açıklama gerekli');
+                return;
+            }
+
         }
 
         try {
@@ -271,6 +274,15 @@ export default function Dashboard() {
                                                     </button>
                                                 </>
                                             )}
+                                            {user?.role !== 'admin' && (
+                                                <button
+                                                    onClick={() => handleEditClick(task)}
+                                                    className="text-blue-500 hover:text-blue-700"
+                                                >
+                                                    ✏️
+                                                </button>
+                                            )}
+
                                         </div>
                                     </div>
                                 </div>
@@ -373,6 +385,7 @@ export default function Dashboard() {
                                     type="text"
                                     value={editingTask.title}
                                     onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                                    disabled={user?.role !== 'admin'}
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
@@ -382,6 +395,7 @@ export default function Dashboard() {
                                 <textarea
                                     value={editingTask.description}
                                     onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                                    disabled={user?.role !== 'admin'}
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     rows="4"
                                 />
