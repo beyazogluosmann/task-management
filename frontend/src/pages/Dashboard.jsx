@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { taskAPI, statsAPI, userAPI } from '../services/api';
-import toast from 'react-hot-toast';
+import { showToast, toastMessages } from '../services/toastService';
 import { useTaskOperations } from '../hooks/useTaskOperations';
 
 export default function Dashboard() {
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
             setLoading(false);
         } catch (error) {
-            toast.error('Veriler yüklenemedi');
+            showToast.error(toastMessages.SERVER_ERROR);
             setLoading(false);
         }
     };
@@ -77,30 +77,30 @@ export default function Dashboard() {
 
     const handleLogout = () => {
         logout();
-        toast.success('Çıkış yapıldı');
+        showToast.success(toastMessages.LOGOUT_SUCCESS);
     };
 
     const handleAddTask = async (e) => {
         e.preventDefault();
 
         if (!newTask.title) {
-            toast.error('Başlık gerekli');
+            showToast.error(toastMessages.TITLE_REQUIRED);
             return;
         }
 
         if (!newTask.description) {
-            toast.error('Açıklama gerekli');
+            showToast.error(toastMessages.DESCRIPTION_REQUIRED);
             return;
         }
 
         if (user?.role === 'admin' && !newTask.assignedTo) {
-            toast.error('Kullanıcı seçmelisiniz');
+            showToast.error(toastMessages.USER_REQUIRED);
             return;
         }
 
         try {
             await taskAPI.createTask(newTask);
-            toast.success('Task eklendi');
+            showToast.success(toastMessages.TASK_ADDED);
             setShowAddModal(false);
             setNewTask({
                 title: '',
@@ -109,7 +109,7 @@ export default function Dashboard() {
             });
             fetchData();
         } catch (error) {
-            toast.error('Task eklenemedi');
+            showToast.error(toastMessages.TASK_ADD_ERROR);
         }
     };
 
@@ -123,12 +123,12 @@ export default function Dashboard() {
 
         if (user?.role === 'admin') {
             if (!editingTask.title) {
-                toast.error('Başlık gerekli');
+                showToast.error(toastMessages.TITLE_REQUIRED);
                 return;
             }
 
             if (!editingTask.description) {
-                toast.error('Açıklama gerekli');
+                showToast.error(toastMessages.DESCRIPTION_REQUIRED);
                 return;
             }
 
@@ -136,12 +136,12 @@ export default function Dashboard() {
 
         try {
             await taskAPI.updateTask(editingTask._id, editingTask);
-            toast.success('Task güncellendi');
+            showToast.success(toastMessages.TASK_UPDATED);
             setShowEditModal(false);
             setEditingTask(null);
             fetchData();
         } catch (error) {
-            toast.error('Task güncellenemedi');
+            showToast.error(toastMessages.TASK_UPDATE_ERROR);
         }
     };
 

@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AuthContext } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { showToast, toastMessages } from '../services/toastService';
 
 export default function Register() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm({
@@ -23,13 +23,13 @@ export default function Register() {
     try {
       const result = await registerUser(data.name, data.email, data.password);
       if (result.success) {
-        toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+        showToast.success(toastMessages.REGISTER_SUCCESS);
         navigate('/login', { replace: true });
       } else {
-        toast.error(result.error || 'Kayıt başarısız');
+        showToast.error(result.error || toastMessages.REGISTER_ERROR);
       }
     } catch (error) {
-      toast.error('Bir hata oluştu');
+      showToast.error(toastMessages.SERVER_ERROR);
     }
   };
 

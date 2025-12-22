@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { set, useForm } from 'react-hook-form';
 import { authAPI } from '../services/api';
-import toast from 'react-hot-toast';
+import { showToast, toastMessages } from '../services/toastService';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -23,7 +23,7 @@ export default function ResetPassword() {
   useEffect(() => {
     if (!token) {
       setIsTokenValid(false);
-      toast.error('Invalid or missing reset token');
+      showToast.error(toastMessages.INVALID_RESET_TOKEN);
     } else{
       setIsTokenValid(true);
     }
@@ -36,13 +36,13 @@ export default function ResetPassword() {
         newPassword: data.newPassword,
         confirmPassword: data.confirmPassword
       });
-      toast.success('Password has been reset successfully!');
+      showToast.success(toastMessages.PASSWORD_RESET_SUCCESS);
       setTimeout(() => {
         navigate('/login');
       }, 1500);
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to reset password';
-      toast.error(message);
+      const message = error.response?.data?.message || toastMessages.PASSWORD_RESET_ERROR;
+      showToast.error(message);
     }
   };
 

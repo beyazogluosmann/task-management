@@ -12,7 +12,7 @@ dotenv.config();
 
 const router = express.Router();
 
-// Configure nodemailer transporter
+
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
@@ -262,11 +262,11 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired reset token' });
         }
 
-        // Hash new password
+        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update user password and remove reset token
+       
         await db.collection('users').updateOne(
             { _id: user._id },
             {

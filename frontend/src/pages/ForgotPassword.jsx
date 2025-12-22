@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authAPI } from '../services/api';
-import toast from 'react-hot-toast';
+import { showToast, toastMessages } from '../services/toastService';
 
 export default function ForgotPassword() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -20,10 +20,10 @@ export default function ForgotPassword() {
       const response = await authAPI.forgotPassword(data.email);
       setIsEmailSent(true);
       setSentEmail(data.email);
-      toast.success('Password reset link has been sent to your email!');
+      showToast.success(toastMessages.PASSWORD_RESET_SENT);
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to send reset email';
-      toast.error(message);
+      const message = error.response?.data?.message || toastMessages.PASSWORD_RESET_ERROR;
+      showToast.error(message);
     }
   };
 
