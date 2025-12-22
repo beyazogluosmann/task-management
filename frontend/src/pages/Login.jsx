@@ -84,6 +84,9 @@ export default function Login() {
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
+            <div className="text-right mt-2">
+              <Link to="/forgot-password" className="text-blue-500 hover:underline text-sm">Parolayı Unuttum?</Link>
+            </div>
           </div>
 
           <button
