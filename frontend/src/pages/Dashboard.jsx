@@ -1,8 +1,13 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { taskAPI, statsAPI, userAPI } from '../services/api';
 import { showToast, toastMessages } from '../services/toastService';
 import { useTaskOperations } from '../hooks/useTaskOperations';
+import { useDebounce } from '../hooks/useDebounce';
+import { TaskList } from '../components/TaskList';
+import { TaskFilters } from '../components/TaskFilters';
+import { TaskPagination } from '../components/TaskPagination';
+import { buildTaskQueryParams } from '../utils/taskFilters';
 
 export default function Dashboard() {
 
@@ -12,13 +17,21 @@ export default function Dashboard() {
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        totalTasks: 0,
+        hasNextPage: false,
+        hasPrevPage: false
+    });
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     const [newTask, setNewTask] = useState({
         title: '',
@@ -26,30 +39,16 @@ export default function Dashboard() {
         status: 'pending'
     });
 
-    const filteredTasks = useMemo(() => {
-        let filtered = filterStatus === 'all'
-            ? tasks
-            : tasks.filter(task => task.status === filterStatus);
-
-
-        if (searchTerm.trim()) {
-            filtered = filtered.filter(task =>
-                task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                task.description.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        return filtered;
-    }, [tasks, filterStatus, searchTerm]);
-
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [filterStatus, debouncedSearchTerm, currentPage]);
 
     const fetchData = async () => {
         try {
+            const params = buildTaskQueryParams(filterStatus, debouncedSearchTerm, 10, currentPage);
+
             const requests = [
-                taskAPI.getTasks(),
+                taskAPI.getTasks(params),
                 statsAPI.getStats()
             ];
 
@@ -57,13 +56,18 @@ export default function Dashboard() {
                 requests.push(userAPI.getUsers());
             }
 
-            const responses = await Promise.all(requests);
+            const [tasksRes, statsRes, usersRes] = await Promise.all(requests);
 
-            setTasks(responses[0].data.tasks);
-            setStats(responses[1].data);
+            setTasks(tasksRes.data.tasks);
+            setStats(statsRes.data);
+            
+            
+            if (tasksRes.data.pagination) {
+                setPagination(tasksRes.data.pagination);
+            }
 
-            if (user?.role === 'admin' && responses[2]) {
-                setUsers(responses[2].data.users);
+            if (user?.role === 'admin' && usersRes) {
+                setUsers(usersRes.data.users);
             }
 
             setLoading(false);
@@ -74,6 +78,12 @@ export default function Dashboard() {
     };
 
     const { handleDeleteTask } = useTaskOperations(fetchData);
+
+    
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleLogout = () => {
         logout();
@@ -98,6 +108,7 @@ export default function Dashboard() {
             return;
         }
 
+
         try {
             await taskAPI.createTask(newTask);
             showToast.success(toastMessages.TASK_ADDED);
@@ -109,6 +120,7 @@ export default function Dashboard() {
             });
             fetchData();
         } catch (error) {
+            console.error('Create task error:', error);
             showToast.error(toastMessages.TASK_ADD_ERROR);
         }
     };
@@ -131,16 +143,23 @@ export default function Dashboard() {
                 showToast.error(toastMessages.DESCRIPTION_REQUIRED);
                 return;
             }
-
         }
 
         try {
-            await taskAPI.updateTask(editingTask._id, editingTask);
+            
+            const updateData = user?.role === 'admin'
+                ? editingTask
+                : { status: editingTask.status };
+
+            console.log('Sending to backend:', updateData);
+
+            await taskAPI.updateTask(editingTask._id, updateData);
             showToast.success(toastMessages.TASK_UPDATED);
             setShowEditModal(false);
             setEditingTask(null);
             fetchData();
         } catch (error) {
+            console.error('Update task error:', error);
             showToast.error(toastMessages.TASK_UPDATE_ERROR);
         }
     };
@@ -171,7 +190,7 @@ export default function Dashboard() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* İstatistikler */}
+                
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     <div className="bg-white p-6 rounded-lg shadow">
                         <h3 className="text-gray-500 text-sm">Toplam Task</h3>
@@ -191,108 +210,32 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Task Listesi */}
+                
                 <div className="bg-white rounded-lg shadow">
-                    <div className="p-6 border-b">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Görevler</h2>
-                            {user?.role === 'admin' && (
-                                <button
-                                    onClick={() => setShowAddModal(true)}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                >
-                                    + Yeni Task Ekle
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="mb-4 flex items-center gap-2">
-                            <span className="text-2xl">🔍</span>
-                            <input
-                                type="text"
-                                placeholder="Task ara..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
-                            />
-                        </div>
-
-                        {/* Filter Dropdown */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl"></span>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="all">Tümü ({tasks.length})</option>
-                                <option value="pending">Bekleyen ({tasks.filter(t => t.status === 'pending').length})</option>
-                                <option value="in_progress">Devam Eden ({tasks.filter(t => t.status === 'in_progress').length})</option>
-                                <option value="completed">Tamamlanan ({tasks.filter(t => t.status === 'completed').length})</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="divide-y">
-                        {filteredTasks.length === 0 ? (
-                            <div className="p-6 text-center text-gray-500">
-                                {filterStatus === 'all' ? 'Henüz görev yok' : 'Bu durumda görev yok'}
-                            </div>
-                        ) : (
-                            filteredTasks.map((task) => (
-                                <div key={task._id} className="p-4 hover:bg-gray-50">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-semibold">{task.title}</h3>
-                                            <p className="text-gray-600 text-sm">{task.description}</p>
-                                            <p className="text-gray-400 text-xs mt-2">
-                                                Oluşturulma: {new Date(task.createdAt).toLocaleDateString('tr-TR')}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                {task.status === 'completed' ? 'Tamamlandı' :
-                                                    task.status === 'in_progress' ? 'Devam Ediyor' :
-                                                        'Beklemede'}
-                                            </span>
-
-                                            {user?.role === 'admin' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEditClick(task)}
-                                                        className="text-blue-500 hover:text-blue-700"
-                                                    >
-                                                        ✏️
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteTask(task._id)}
-                                                        className="text-red-500 hover:text-red-700"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </>
-                                            )}
-                                            {user?.role !== 'admin' && (
-                                                <button
-                                                    onClick={() => handleEditClick(task)}
-                                                    className="text-blue-500 hover:text-blue-700"
-                                                >
-                                                    ✏️
-                                                </button>
-                                            )}
-
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    <TaskFilters
+                        filterStatus={filterStatus}
+                        searchTerm={searchTerm}
+                        tasks={tasks}
+                        onFilterChange={setFilterStatus}
+                        onSearchChange={setSearchTerm}
+                        userRole={user?.role}
+                        onAddTaskClick={() => setShowAddModal(true)}
+                    />
+                    <TaskList
+                        tasks={tasks}
+                        filterStatus={filterStatus}
+                        user={user}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteTask}
+                    />
+                    <TaskPagination
+                        pagination={pagination}
+                        onPageChange={handlePageChange}
+                    />
                 </div>
             </div>
 
-            {/* Yeni Task Modal */}
+            
             {showAddModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -372,34 +315,36 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Edit Task Modal */}
+            
             {showEditModal && editingTask && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Task Düzenle</h3>
 
                         <form onSubmit={handleUpdateTask}>
-                            <div className="mb-4">
-                                <label className="block text-gray-700 mb-2">Başlık</label>
-                                <input
-                                    type="text"
-                                    value={editingTask.title}
-                                    onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                                    disabled={user?.role !== 'admin'}
-                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
+                            {user?.role === 'admin' && (
+                                <>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 mb-2">Başlık</label>
+                                        <input
+                                            type="text"
+                                            value={editingTask.title}
+                                            onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
 
-                            <div className="mb-4">
-                                <label className="block text-gray-700 mb-2">Açıklama</label>
-                                <textarea
-                                    value={editingTask.description}
-                                    onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
-                                    disabled={user?.role !== 'admin'}
-                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    rows="4"
-                                />
-                            </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 mb-2">Açıklama</label>
+                                        <textarea
+                                            value={editingTask.description}
+                                            onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            rows="4"
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="mb-6">
                                 <label className="block text-gray-700 mb-2">Durum</label>

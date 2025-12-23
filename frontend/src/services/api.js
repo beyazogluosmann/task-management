@@ -51,6 +51,13 @@ export const statsAPI = {
   getStats: () => api.get('/stats'),
 };
 
+export const constantsAPI = {
+  getAll: () => api.get('/constants/app'),
+  getTaskStatuses: () => api.get('/constants/task-statuses'),
+  getEmptyMessages: () => api.get('/constants/empty-messages'),
+  getPagination: () => api.get('/constants/pagination'),
+};
+
 export const loginUser = (email, password) => {
   return authAPI.login({ email, password });
 };
