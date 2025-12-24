@@ -1,59 +1,29 @@
-import { ObjectId } from 'mongodb';
-import { getDB } from '../config/db.js';
+import { UserRepository } from '../repositories/UserRepository.js';
+
+const userRepository = new UserRepository();
 
 export class User {
   static async findAll() {
-    const db = getDB();
-    return await db.collection('users')
-      .find({})
-      .project({ password: 0 })
-      .toArray();
+    return await userRepository.findAll();
   }
 
   static async findById(id) {
-    const db = getDB();
-    if (!ObjectId.isValid(id)) return null;
-    
-    return await db.collection('users').findOne(
-      { _id: new ObjectId(id) },
-      { projection: { password: 0 } }
-    );
+    return await userRepository.findById(id);
   }
 
   static async findByEmail(email) {
-    const db = getDB();
-    return await db.collection('users').findOne({ email });
+    return await userRepository.findByEmail(email);
   }
 
   static async updateById(id, updateData) {
-    const db = getDB();
-    if (!ObjectId.isValid(id)) return null;
-    
-    const result = await db.collection('users').updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updateData }
-    );
-    
-    return result.matchedCount > 0;
+    return await userRepository.updateById(id, updateData);
   }
 
   static async deleteById(id) {
-    const db = getDB();
-    if (!ObjectId.isValid(id)) return null;
-    
-    const result = await db.collection('users').deleteOne({
-      _id: new ObjectId(id)
-    });
-    
-    return result.deletedCount > 0;
+    return await userRepository.deleteById(id);
   }
 
   static async deleteTasksByUser(id) {
-    const db = getDB();
-    if (!ObjectId.isValid(id)) return null;
-    
-    await db.collection('tasks').deleteMany({
-      assignedTo: new ObjectId(id)
-    });
+    return await userRepository.deleteTasksByUser(id);
   }
 }

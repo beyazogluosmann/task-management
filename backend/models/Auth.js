@@ -1,53 +1,29 @@
-import { getDB } from '../config/db.js';
-import { ObjectId } from 'mongodb';
+import { AuthRepository } from '../repositories/AuthRepository.js';
+
+const authRepository = new AuthRepository();
 
 export class Auth {
   static async findUserByEmail(email) {
-    const db = getDB();
-    return await db.collection('users').findOne({ email });
+    return await authRepository.findByEmail(email);
   }
 
   static async createUser(userData) {
-    const db = getDB();
-    const result = await db.collection('users').insertOne(userData);
-    return { _id: result.insertedId, ...userData };
+    return await authRepository.insertOne(userData);
   }
 
   static async findUserById(userId) {
-    const db = getDB();
-    if (!ObjectId.isValid(userId)) return null;
-    return await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    return await authRepository.findOneById(userId);
   }
 
   static async updateResetToken(userId, resetToken, resetTokenExpiry) {
-    const db = getDB();
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          resetToken,
-          resetTokenExpiry
-        }
-      }
-    );
+    return await authRepository.updateResetToken(userId, resetToken, resetTokenExpiry);
   }
 
   static async findUserByResetToken(token) {
-    const db = getDB();
-    return await db.collection('users').findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: new Date() }
-    });
+    return await authRepository.findByResetToken(token);
   }
 
   static async updatePassword(userId, hashedPassword) {
-    const db = getDB();
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: { password: hashedPassword },
-        $unset: { resetToken: '', resetTokenExpiry: '' }
-      }
-    );
+    return await authRepository.updatePassword(userId, hashedPassword);
   }
 }

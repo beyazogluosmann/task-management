@@ -89,14 +89,13 @@ export class TaskController {
       const skip = (page - 1) * limit;
 
       const tasks = await Task.findAll(query, { [sortField]: sortOrder }, skip, limit);
-      const tasksWithAssignee = await Task.populateAssignees(tasks);
 
       const total = await Task.countDocuments(query);
 
       res.status(200).json({
         message: 'Tasks retrieved successfully',
-        count: tasksWithAssignee.length,
-        tasks: tasksWithAssignee,
+        count: tasks.length,
+        tasks: tasks,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(total / limit),
@@ -187,11 +186,10 @@ export class TaskController {
       }
 
       const updatedTask = await Task.findById(id);
-      const taskWithAssignee = await Task.populateAssignee(updatedTask);
 
       res.status(200).json({
         message: 'Task updated successfully',
-        task: taskWithAssignee
+        task: updatedTask
       });
 
     } catch (error) {
