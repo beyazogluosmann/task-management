@@ -49,6 +49,7 @@ export const userAPI = {
 
 export const statsAPI = {
   getStats: () => api.get('/stats'),
+  getTaskCounts: () => api.get('/stats/counts'),
 };
 
 export const constantsAPI = {

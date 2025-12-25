@@ -5,5 +5,6 @@ import { StatsController } from '../controllers/StatsController.js';
 const router = express.Router();
 
 router.get('/', verifyToken, StatsController.getStats);
+router.get('/counts', verifyToken, StatsController.getTaskCounts);
 
 export default router;

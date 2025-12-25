@@ -15,6 +15,12 @@ export default function Dashboard() {
 
     const [tasks, setTasks] = useState([]);
     const [stats, setStats] = useState({});
+    const [taskCounts, setTaskCounts] = useState({
+        all: 0,
+        pending: 0,
+        in_progress: 0,
+        completed: 0
+    });
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -49,18 +55,19 @@ export default function Dashboard() {
 
             const requests = [
                 taskAPI.getTasks(params),
-                statsAPI.getStats()
+                statsAPI.getStats(),
+                statsAPI.getTaskCounts()
             ];
 
             if (user?.role === 'admin') {
                 requests.push(userAPI.getUsers());
             }
 
-            const [tasksRes, statsRes, usersRes] = await Promise.all(requests);
+            const [tasksRes, statsRes, taskCountsRes, usersRes] = await Promise.all(requests);
 
             setTasks(tasksRes.data.tasks);
             setStats(statsRes.data);
-            
+            setTaskCounts(taskCountsRes.data.counts);
             
             if (tasksRes.data.pagination) {
                 setPagination(tasksRes.data.pagination);
@@ -216,6 +223,7 @@ export default function Dashboard() {
                         filterStatus={filterStatus}
                         searchTerm={searchTerm}
                         tasks={tasks}
+                        taskCounts={taskCounts}
                         onFilterChange={setFilterStatus}
                         onSearchChange={setSearchTerm}
                         userRole={user?.role}

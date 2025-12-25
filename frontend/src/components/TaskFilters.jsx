@@ -4,6 +4,7 @@ export function TaskFilters({
   filterStatus,
   searchTerm,
   tasks,
+  taskCounts,
   onFilterChange,
   onSearchChange,
   userRole,
@@ -50,12 +51,23 @@ export function TaskFilters({
           className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Durum filtreleme"
         >
-          <option value="all">Tümü ({getStatusCount(tasks, 'all')})</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label} ({getStatusCount(tasks, option.value)})
-            </option>
-          ))}
+          {taskCounts ? (
+            <>
+              <option value="all">Tümü ({taskCounts.all})</option>
+              <option value="pending">Beklemede ({taskCounts.pending})</option>
+              <option value="in_progress">Devam Ediyor ({taskCounts.in_progress})</option>
+              <option value="completed">Tamamlandı ({taskCounts.completed})</option>
+            </>
+          ) : (
+            <>
+              <option value="all">Tümü ({getStatusCount(tasks, 'all')})</option>
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label} ({getStatusCount(tasks, option.value)})
+                </option>
+              ))}
+            </>
+          )}
         </select>
       </div>
     </div>

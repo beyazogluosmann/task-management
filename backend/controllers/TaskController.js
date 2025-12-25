@@ -157,7 +157,7 @@ export class TaskController {
         return res.status(400).json({ message: 'Status must be pending, in_progress or completed' });
       }
 
-      if (assignedTo) {
+      if (assignedTo && typeof assignedTo === 'string' && assignedTo.trim() !== '') {
         if (!ObjectId.isValid(assignedTo)) {
           return res.status(400).json({ message: 'Invalid user ID format' });
         }
@@ -173,7 +173,7 @@ export class TaskController {
       if (isAdmin) {
         if (title) updateFields.title = title;
         if (description) updateFields.description = description;
-        if (assignedTo) updateFields.assignedTo = new ObjectId(assignedTo);
+        if (assignedTo && typeof assignedTo === 'string' && assignedTo.trim() !== '') updateFields.assignedTo = new ObjectId(assignedTo);
         if (dueDate) updateFields.dueDate = new Date(dueDate);
       }
 

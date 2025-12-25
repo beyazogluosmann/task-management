@@ -10,4 +10,8 @@ export class Stats {
   static async getUserStats(userId) {
     return await statsRepository.getUserSpecificStats(userId);
   }
+
+  static async getTaskCounts(query = {}) {
+    return await statsRepository.getTaskStatsCounts(query);
+  }
 }

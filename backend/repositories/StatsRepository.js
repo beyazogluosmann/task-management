@@ -75,4 +75,15 @@ export class StatsRepository extends BaseRepository {
       }
     };
   }
+
+  async getTaskStatsCounts(query = {}) {
+    const collection = this.getCollection();
+    
+    return {
+      all: await collection.countDocuments(query),
+      pending: await collection.countDocuments({ ...query, status: 'pending' }),
+      in_progress: await collection.countDocuments({ ...query, status: 'in_progress' }),
+      completed: await collection.countDocuments({ ...query, status: 'completed' })
+    };
+  }
 }
