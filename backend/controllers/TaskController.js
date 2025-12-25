@@ -1,4 +1,5 @@
 import { Task } from '../models/Task.js';
+import { User } from '../models/User.js';
 import { ObjectId } from 'mongodb';
 import { getDB } from '../config/db.js';
 
@@ -11,13 +12,11 @@ export class TaskController {
         return res.status(400).json({ message: 'Title, description and assignedTo are required' });
       }
 
-      const db = getDB();
-
       if (!ObjectId.isValid(assignedTo)) {
         return res.status(400).json({ message: 'Invalid user ID format' });
       }
 
-      const user = await db.collection('users').findOne({ _id: new ObjectId(assignedTo) });
+      const user = await User.findById(assignedTo)
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -137,7 +136,7 @@ export class TaskController {
       const currentUser = req.user;
       const isAdmin = currentUser.role === 'admin';
 
-      if (!isAdmin && task.assignedTo.toString() !== currentUser._id.toString()) {
+      if (!isAdmin && task.assignedTo._id.toString() !== currentUser._id.toString()) {
         return res.status(403).json({ message: 'Access denied. You can only update your own tasks' });
       }
 
