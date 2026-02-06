@@ -24,6 +24,11 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
+// Ana dizin için basit bir yanıt ekle
+app.get('/', (req, res) => {
+  res.send('API is running');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
