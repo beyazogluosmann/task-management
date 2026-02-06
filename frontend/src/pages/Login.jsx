@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AuthContext } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { showToast, toastMessages } from '../services/toastService';
 
 export default function Login() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -26,13 +26,13 @@ export default function Login() {
     try {
       const result = await login(data.email, data.password);
       if (result.success) {
-        toast.success('Giriş başarılı!');
+        showToast.success(toastMessages.LOGIN_SUCCESS);
         navigate('/dashboard', { replace: true });
       } else {
-        toast.error(result.error || 'Giriş başarısız');
+        showToast.error(result.error || toastMessages.LOGIN_ERROR);
       }
     } catch (error) {
-      toast.error('Bir hata oluştu');
+      showToast.error(toastMessages.SERVER_ERROR);
     }
   };
 
@@ -84,6 +84,9 @@ export default function Login() {
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
+            <div className="text-right mt-2">
+              <Link to="/forgot-password" className="text-blue-500 hover:underline text-sm">Parolayı Unuttum?</Link>
+            </div>
           </div>
 
           <button

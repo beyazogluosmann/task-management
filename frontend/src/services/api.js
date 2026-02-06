@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://task-management-rxoy.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,8 +14,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/login';
-    }
+  const pathname = window.location.pathname;
+  if (pathname !== '/reset-password' && pathname !== '/forgot-password') {
+    window.location.href = '/login';
+  }
+}
     return Promise.reject(error);
   }
 );
@@ -25,6 +28,8 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
   getCurrentUser: () => api.get('/auth/current-user'),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
 export const taskAPI = {
@@ -44,6 +49,14 @@ export const userAPI = {
 
 export const statsAPI = {
   getStats: () => api.get('/stats'),
+  getTaskCounts: () => api.get('/stats/counts'),
+};
+
+export const constantsAPI = {
+  getAll: () => api.get('/constants/app'),
+  getTaskStatuses: () => api.get('/constants/task-statuses'),
+  getEmptyMessages: () => api.get('/constants/empty-messages'),
+  getPagination: () => api.get('/constants/pagination'),
 };
 
 export const loginUser = (email, password) => {
