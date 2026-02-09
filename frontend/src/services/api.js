@@ -14,8 +14,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const requestUrl = error.config?.url || '';
+      const isCurrentUserRequest = requestUrl.includes('/auth/current-user');
+      // Oturum kontrolü (getCurrentUser) 401'de asla yönlendirme yapma — döngüyü kesin kır
+      if (isCurrentUserRequest) {
+        return Promise.reject(error);
+      }
       const pathname = window.location.pathname;
-      // Login/register/reset sayfalarındayken 401'de yönlendirme yapma (redirect döngüsünü kır)
       const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
       if (!isAuthPage) {
         window.location.href = '/login';
