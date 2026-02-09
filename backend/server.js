@@ -26,19 +26,23 @@ app.use((req, res, next) => {
   next();
 });
 
-// Manuel CORS middleware - EN ÜST SIRAYA
+// AGRESIF CORS - HER ORIGIN'E İZİN VER
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   console.log('CORS: Setting headers for origin:', origin);
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // Preflight isteklerine direkt cevap ver
+  // Her origin'e izin ver
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, Set-Cookie');
+  res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  // OPTIONS (preflight) isteklerine hemen cevap ver
   if (req.method === 'OPTIONS') {
-    console.log('CORS: Responding to OPTIONS preflight');
-    return res.sendStatus(200);
+    console.log('CORS: Responding to OPTIONS preflight with 204');
+    return res.status(204).end();
   }
   next();
 });
