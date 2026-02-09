@@ -14,16 +14,20 @@ dotenv.config();
 
 const app = express();
 
-// CORS ayarları - TÜM originlere izin ver
-app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Preflight (OPTIONS) isteklerine global cevap
-app.options('*', cors());
+// Manuel CORS middleware - EN ÜST SIRAYA
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Preflight isteklerine direkt cevap ver
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(cookieParser());
 app.use(express.json());
