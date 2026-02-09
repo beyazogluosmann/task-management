@@ -2,18 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import { connectDB } from './config/db.js';
-
-import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users.js';
-import taskRoutes from './routes/tasks.js';
-import statsRoutes from './routes/stats.js';
-import constantsRoutes from './routes/constants.js';
-
-dotenv.config();
-
-const app = express();
-
+// CORS ayarları en üste alınmalı
 const allowedOrigins = [
   'https://task-management-frontend-6khn.onrender.com',
   'http://localhost:5173'
@@ -31,6 +20,20 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Preflight (OPTIONS) isteklerine global cevap
+app.options('*', cors());
+import { connectDB } from './config/db.js';
+
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+import taskRoutes from './routes/tasks.js';
+import statsRoutes from './routes/stats.js';
+import constantsRoutes from './routes/constants.js';
+
+dotenv.config();
+
+const app = express();
 
 app.use(cookieParser());
 app.use(express.json());
