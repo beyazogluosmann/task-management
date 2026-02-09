@@ -14,9 +14,22 @@ dotenv.config();
 
 const app = express();
 
+// Request logger - TÜM istekleri logla
+app.use((req, res, next) => {
+  console.log('========== INCOMING REQUEST ==========');
+  console.log('Time:', new Date().toISOString());
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Origin:', req.headers.origin);
+  console.log('Host:', req.headers.host);
+  console.log('=======================================');
+  next();
+});
+
 // Manuel CORS middleware - EN ÜST SIRAYA
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  console.log('CORS: Setting headers for origin:', origin);
   res.header('Access-Control-Allow-Origin', origin || '*');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -24,6 +37,7 @@ app.use((req, res, next) => {
   
   // Preflight isteklerine direkt cevap ver
   if (req.method === 'OPTIONS') {
+    console.log('CORS: Responding to OPTIONS preflight');
     return res.sendStatus(200);
   }
   next();
