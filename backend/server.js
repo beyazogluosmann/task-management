@@ -14,11 +14,19 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  'https://task-management-frontend-6khn.onrender.com',
+  'http://localhost:5173'
+];
 app.use(cors({
-  origin: [
-    'https://task-management-frontend-6khn.onrender.com', // Render frontend URL
-    'http://localhost:5173'
-  ],
+  origin: function(origin, callback) {
+    console.log('CORS Origin:', origin);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
