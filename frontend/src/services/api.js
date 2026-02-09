@@ -14,11 +14,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-  const pathname = window.location.pathname;
-  if (pathname !== '/reset-password' && pathname !== '/forgot-password') {
-    window.location.href = '/login';
-  }
-}
+      const pathname = window.location.pathname;
+      // Login/register/reset sayfalarındayken 401'de yönlendirme yapma (redirect döngüsünü kır)
+      const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
+      if (!isAuthPage) {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );
