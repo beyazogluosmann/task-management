@@ -2,27 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-// CORS ayarları en üste alınmalı
-const allowedOrigins = [
-  'https://task-management-frontend-6khn.onrender.com',
-  'http://localhost:5173'
-];
-app.use(cors({
-  origin: function(origin, callback) {
-    console.log('CORS Origin:', origin);
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS: ' + origin));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Preflight (OPTIONS) isteklerine global cevap
-app.options('*', cors());
 import { connectDB } from './config/db.js';
 
 import authRoutes from './routes/auth.js';
@@ -34,6 +13,17 @@ import constantsRoutes from './routes/constants.js';
 dotenv.config();
 
 const app = express();
+
+// CORS ayarları - TÜM originlere izin ver
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Preflight (OPTIONS) isteklerine global cevap
+app.options('*', cors());
 
 app.use(cookieParser());
 app.use(express.json());
