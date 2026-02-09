@@ -1,6 +1,6 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 
@@ -14,38 +14,30 @@ dotenv.config();
 
 const app = express();
 
-// Request logger - TÜM istekleri logla
-app.use((req, res, next) => {
-  console.log('========== INCOMING REQUEST ==========');
-  console.log('Time:', new Date().toISOString());
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  console.log('Origin:', req.headers.origin);
-  console.log('Host:', req.headers.host);
-  console.log('=======================================');
-  next();
-});
+// İzin verilen frontend origin'leri (env'den; virgülle ayırarak birden fazla eklenebilir)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-// AGRESIF CORS - HER ORIGIN'E İZİN VER
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log('CORS: Setting headers for origin:', origin);
-  
-  // Her origin'e izin ver
-  res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, Set-Cookie');
-  res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  
-  // OPTIONS (preflight) isteklerine hemen cevap ver
-  if (req.method === 'OPTIONS') {
-    console.log('CORS: Responding to OPTIONS preflight with 204');
-    return res.status(204).end();
-  }
-  next();
-});
+// Origin yoksa veya whitelist boşsa: gelen origin'i kabul et (geliştirme için)
+function corsOrigin(origin, cb) {
+  if (!origin) return cb(null, true); // same-origin veya Postman vb.
+  if (allowedOrigins.length === 0) return cb(null, true); // whitelist yoksa tüm origin'lere izin
+  if (allowedOrigins.includes(origin)) return cb(null, true);
+  return cb(null, false);
+}
+
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cookie', 'Set-Cookie'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400,
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());
