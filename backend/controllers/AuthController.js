@@ -5,6 +5,8 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { getResetPasswordEmailHTML } from '../utils/emailTemplates.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
@@ -51,9 +53,32 @@ export class AuthController {
 
       const user = await Auth.createUser(newUser);
 
+      // Kayıt olan kullanıcıyı da otomatik olarak giriş yapmış sayalım.
+      // Böylece önceki kullanıcının token'ı kalmaz; herkes kendi hesabıyla oturum açar.
+      const token = jwt.sign(
+        {
+          userId: user._id,
+          role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
       res.status(201).json({
         message: 'User registered successfully!',
-        userId: user._id
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
       });
 
     } catch (error) {
@@ -96,12 +121,6 @@ export class AuthController {
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
-
-      // Üretimde frontend ve backend farklı domain'lerde olduğu için
-      // cookie'nin cross-site isteklerde de gönderilebilmesi gerekiyor.
-      // Bu yüzden production'da sameSite: 'none' + secure: true kullanıyoruz.
-      // Local geliştirmede ise daha rahat davranmak için sameSite: 'lax'.
-      const isProduction = process.env.NODE_ENV === 'production';
 
       res.cookie('token', token, {
         httpOnly: true,
