@@ -13,19 +13,9 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const requestUrl = error.config?.url || '';
-      const isCurrentUserRequest = requestUrl.includes('/auth/current-user');
-      // Oturum kontrolü (getCurrentUser) 401'de asla yönlendirme yapma — döngüyü kesin kır
-      if (isCurrentUserRequest) {
-        return Promise.reject(error);
-      }
-      const pathname = window.location.pathname;
-      const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
-      if (!isAuthPage) {
-        window.location.href = '/login';
-      }
-    }
+    // Şimdilik 401 dahil tüm hataları sadece yukarıya fırlatıyoruz.
+    // Yönlendirme mantığını ProtectedRoute / AuthContext gibi bileşenlerde
+    // kontrollü şekilde ele almak daha güvenli.
     return Promise.reject(error);
   }
 );
