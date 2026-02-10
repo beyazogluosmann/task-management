@@ -97,11 +97,17 @@ export class AuthController {
         { expiresIn: '7d' }
       );
 
+      // Üretimde frontend ve backend farklı domain'lerde olduğu için
+      // cookie'nin cross-site isteklerde de gönderilebilmesi gerekiyor.
+      // Bu yüzden production'da sameSite: 'none' + secure: true kullanıyoruz.
+      // Local geliştirmede ise daha rahat davranmak için sameSite: 'lax'.
+      const isProduction = process.env.NODE_ENV === 'production';
+
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
       res.status(200).json({
