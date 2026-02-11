@@ -27,7 +27,7 @@ export class AuthController {
       }
 
       if (password.length < 6) {
-        return res.status(400).json({ message: 'Password must be at least 6 chracters' });
+        return res.status(400).json({ message: 'Password must be at least 6 characters' });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,7 +37,7 @@ export class AuthController {
 
       const existingUser = await Auth.findUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: 'This email has elready registered' });
+        return res.status(400).json({ message: 'This email has already registered' });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -84,7 +84,7 @@ export class AuthController {
     } catch (error) {
       console.error('Register error', error);
       res.status(500).json({
-        message: 'Server error during registiration',
+        message: 'Server error during registration',
         error: error.message
       });
     }
@@ -130,7 +130,7 @@ export class AuthController {
       });
 
       res.status(200).json({
-        message: 'Login succesful!',
+        message: 'Login successful!',
         user: {
           id: user._id,
           name: user.name,
