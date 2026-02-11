@@ -1,3 +1,9 @@
+https://task-management-frontend-6khn.onrender.com
+Login for Admin -> username: osman@test.com
+                   password: 123456,
+  
+After registering, you can try adding tasks as an admin user.
+
 # task-management
 
 # Task Management System
