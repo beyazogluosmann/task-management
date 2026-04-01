@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://task-management-rxoy.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,12 +13,9 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-  const pathname = window.location.pathname;
-  if (pathname !== '/reset-password' && pathname !== '/forgot-password') {
-    window.location.href = '/login';
-  }
-}
+    // Şimdilik 401 dahil tüm hataları sadece yukarıya fırlatıyoruz.
+    // Yönlendirme mantığını ProtectedRoute / AuthContext gibi bileşenlerde
+    // kontrollü şekilde ele almak daha güvenli.
     return Promise.reject(error);
   }
 );

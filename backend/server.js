@@ -1,6 +1,6 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 
@@ -14,12 +14,30 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+// İzin verilen frontend origin'leri (env'den; virgülle ayırarak birden fazla eklenebilir)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+// Origin yoksa veya whitelist boşsa: gelen origin'i kabul et (geliştirme için)
+function corsOrigin(origin, cb) {
+  if (!origin) return cb(null, true); // same-origin veya Postman vb.
+  if (allowedOrigins.length === 0) return cb(null, true); // whitelist yoksa tüm origin'lere izin
+  if (allowedOrigins.includes(origin)) return cb(null, true);
+  return cb(null, false);
+}
+
+app.use(
+  cors({
+    origin: corsOrigin,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cookie', 'Set-Cookie'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400,
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());

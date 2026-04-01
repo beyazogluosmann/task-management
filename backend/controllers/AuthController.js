@@ -5,6 +5,8 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { getResetPasswordEmailHTML } from '../utils/emailTemplates.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
@@ -25,7 +27,7 @@ export class AuthController {
       }
 
       if (password.length < 6) {
-        return res.status(400).json({ message: 'Password must be at least 6 chracters' });
+        return res.status(400).json({ message: 'Password must be at least 6 characters' });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,7 +37,7 @@ export class AuthController {
 
       const existingUser = await Auth.findUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: 'This email has elready registered' });
+        return res.status(400).json({ message: 'This email has already registered' });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -51,15 +53,38 @@ export class AuthController {
 
       const user = await Auth.createUser(newUser);
 
+      // Kayıt olan kullanıcıyı da otomatik olarak giriş yapmış sayalım.
+      // Böylece önceki kullanıcının token'ı kalmaz; herkes kendi hesabıyla oturum açar.
+      const token = jwt.sign(
+        {
+          userId: user._id,
+          role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
       res.status(201).json({
         message: 'User registered successfully!',
-        userId: user._id
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
       });
 
     } catch (error) {
       console.error('Register error', error);
       res.status(500).json({
-        message: 'Server error during registiration',
+        message: 'Server error during registration',
         error: error.message
       });
     }
@@ -99,13 +124,13 @@ export class AuthController {
 
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
       res.status(200).json({
-        message: 'Login succesful!',
+        message: 'Login successful!',
         user: {
           id: user._id,
           name: user.name,
